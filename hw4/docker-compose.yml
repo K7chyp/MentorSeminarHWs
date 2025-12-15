@@ -1,0 +1,45 @@
+services:
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino-coordinator
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./etc/catalog:/etc/trino/catalog
+    networks:
+      - trino-network
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: homework_db
+      POSTGRES_USER: trino_user
+      POSTGRES_PASSWORD: trino_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - trino-network
+
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: jupyter-hub
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      GRANT_SUDO: "yes"
+    networks:
+      - trino-network
+
+networks:
+  trino-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
